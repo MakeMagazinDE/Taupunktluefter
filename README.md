@@ -12,7 +12,7 @@ Maker Media GmbH
 
 Hier gibt es den Arduino-Code zum Projekt des Taupunktlüfters sowie den gegenüber dem Heft um den Modusschalter erweiterten Schaltplan:
 
-![Schaltplan](./Schaltung mit Schalter.jpg)
+![Schaltplan](./Schaltung_mit_Schalter.jpg)
 
 Der Modusschalter ist ein Schalter mit drei Schaltstellungen: links, Mitte, rechts. In der Mittelstellung sind alle Pole frei, bei rechts wird der mittlere Pol nach rechts verbunden und bei links der mittlere Pol nach links. Beschaltet wird dann beispielsweise so: linker Kontakt des Schalters auf GND (linke Stellung ist dann für **aus**), rechter Kontakt auf VCC (5V, rechte Stellung ist dann für **an**) und Mittelkontakt auf Arduino-IO-Pin 6 (Verbindung zum Relais, Mittelstellung ist dann für **Automatik**). Der 470-Ohm-Widerstand schützt den Arduino gegen Kurzschluss, wenn der Schalter nicht in der Mittelstellung steht.
 
