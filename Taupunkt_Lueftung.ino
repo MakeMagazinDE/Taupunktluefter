@@ -4,6 +4,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <avr/wdt.h>
 
+#define TAPIN    2 // Taste fuer Hintergrundbl.
 #define RELAIPIN 6 // Anschluss des Lüfter-Relais
 #define DHTPIN_1 5 // Datenleitung für den DHT-Sensor 1 (innen)
 #define DHTPIN_2 4 // Datenleitung für den DHT-Sensor 2 (außen)
@@ -33,6 +34,8 @@ DHT dht2(DHTPIN_2, DHTTYPE_2); //Der Außensensor wird ab jetzt mit dht2 angespr
 LiquidCrystal_I2C lcd(0x27,20,4); // LCD: I2C-Addresse und Displaygröße setzen
 
 bool fehler = true;
+volatile int backlightTimeout = 4;
+volatile bool backlightToggle = false;
 
 void setup() {
   wdt_enable(WDTO_8S); // Watchdog timer auf 8 Sekunden stellen
@@ -55,6 +58,8 @@ void setup() {
     
   dht1.begin(); // Sensoren starten
   dht2.begin();   
+  pinMode(TAPIN,INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(TAPIN), isrLCDon, FALLING);
 }
 
 void loop() {
@@ -100,6 +105,11 @@ void loop() {
     while (1);  // Endlosschleife um das Display zu lesen und die CPU durch den Watchdog neu zu starten
  }
  wdt_reset();  // Watchdog zurücksetzen
+ if (backlightTimeout <= 0) {
+    lcd.noBacklight();
+ } else {
+    --backlightTimeout;
+ }
 
 //**** Taupunkte errechnen********
 float Taupunkt_1 = taupunkt(t1, h1);
@@ -161,7 +171,14 @@ float Taupunkt_2 = taupunkt(t2, h2);
   lcd.write((uint8_t)0); // Sonderzeichen °C
   lcd.write(('C'));
 
-delay(6000); // Zeit um das Display zu lesen
+// delay(6000); // Zeit um das Display zu lesen
+  for(int i=0; i<60; i++) {
+    if (backlightToggle) {
+      lcd.backlight();
+      backlightToggle = false;
+    }
+    delay(100);
+  }
 wdt_reset(); // Watchdog zurücksetzen
 
   lcd.clear();
@@ -189,7 +206,14 @@ if (rel == true)
  lcd.write((uint8_t)0); // Sonderzeichen °C
  lcd.write('C');
 
- delay(4000);   // Wartezeit zwischen zwei Messungen
+// delay(4000);   // Wartezeit zwischen zwei Messungen
+ for(int i=0; i<40; i++) {
+    if (backlightToggle) {
+      lcd.backlight();
+      backlightToggle = false;
+    }
+    delay(100);
+ }
  wdt_reset();   // Watchdog zurücksetzen 
  
 }
@@ -225,3 +249,11 @@ float a, b;
   {
     asm volatile ("  jmp 0");  
   }
+
+void isrLCDon() {
+  backlightTimeout = 4;
+  backlightToggle = true;
+  for(int i=0; i<40; i++) { // delay 40x500uSek=20mSek
+    delayMicroseconds(500);
+  }
+}
