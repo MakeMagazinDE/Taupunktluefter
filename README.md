@@ -16,4 +16,4 @@ Hier gibt es den Arduino-Code zum Projekt des Taupunktlüfters sowie den gegenü
 
 Der Modusschalter ist ein Schalter mit drei Schaltstellungen: links, Mitte, rechts. In der Mittelstellung sind alle Pole frei, bei rechts wird der mittlere Pol nach rechts verbunden und bei links der mittlere Pol nach links. Beschaltet wird dann beispielsweise so: linker Kontakt des Schalters auf GND (linke Stellung ist dann für **aus**), rechter Kontakt auf VCC (5V, rechte Stellung ist dann für **an**) und Mittelkontakt auf Arduino-IO-Pin 6 (Verbindung zum Relais, Mittelstellung ist dann für **Automatik**).
 
-Den vollständigen Artikel gibt es in der **[Make-Ausgabe 1/22 ab Seite 22](https://www.heise.de/select/make/2022/1/2135511212557842576)** zu lesen.
+Die wichtigsten Fragen rund um den Taupunktlüfter beantwortet eine **[FAQ](https://heise.de/-6526328)**. Den vollständigen Artikel zum Projekt gibt es in der **[Make-Ausgabe 1/22 ab Seite 22](https://www.heise.de/select/make/2022/1/2135511212557842576)** zu lesen.
