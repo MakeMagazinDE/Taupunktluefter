@@ -6,9 +6,9 @@ Maker Media GmbH
 
 # Taupunktlüfter
 
-![Taupunktluefter](./Taupunktluefter.jpg)
-
 **Lüften ist die beste und billigste Maßnahme gegen feuchte Keller  – jedenfalls, wenn man es richtig macht und sich nicht von außen zusätzliche Nässe ins Gewölbe holt. Bei unserem Projekt behält ein Arduino Nano die aktuellen Taupunkte drinnen und draußen rund um die Uhr im Auge und legt durch gezieltes Lüften den Keller trocken.**
+
+![Taupunktluefter](./Taupunktluefter.jpg)
 
 Hier gibt es den Arduino-Code zum Projekt des Taupunktlüfters sowie den gegenüber dem Heft um den Modusschalter erweiterten Schaltplan:
 
