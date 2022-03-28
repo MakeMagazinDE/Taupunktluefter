@@ -10,10 +10,10 @@ Maker Media GmbH
 
 ![Taupunktluefter](./Taupunktluefter.jpg)
 
-Hier gibt es den Arduino-Code zum Projekt des Taupunktlüfters sowie den gegenüber dem Heft um den Modusschalter erweiterten Schaltplan:
+Hier gibt es den Arduino-Code zum Projekt des Taupunktlüfters sowohl in der Fassung ohne Datenlogger, wie in Make 1/22 beschrieben, als auch in der Fassung mit Datenlogger, die in Make 2/22 beschrieben wird. Diese Version zeigt auch der erweiterte Schaltplan:
 
-![Schaltplan](./Schaltung.jpg)
+![Schaltplan Taupunktlüfter mit Logger](./TaupunktluefterMitLogger.jpg)
 
-Der Modusschalter ist ein Schalter mit drei Schaltstellungen: links, Mitte, rechts. In der Mittelstellung sind alle Pole frei, bei rechts wird der mittlere Pol nach rechts verbunden und bei links der mittlere Pol nach links. Beschaltet wird dann beispielsweise so: linker Kontakt des Schalters auf GND (linke Stellung ist dann für **aus**), rechter Kontakt auf VCC (5V, rechte Stellung ist dann für **an**) und Mittelkontakt auf Arduino-IO-Pin 6 (Verbindung zum Relais, Mittelstellung ist dann für **Automatik**).
+Der im Schaltplan gezeigte _Modusschalter_ ist ein Schalter mit drei Schaltstellungen: links, Mitte, rechts. In der Mittelstellung sind alle Pole frei, bei rechts wird der mittlere Pol nach rechts verbunden und bei links der mittlere Pol nach links. Beschaltet wird dann beispielsweise so: linker Kontakt des Schalters auf GND (linke Stellung ist dann für **aus**), rechter Kontakt auf VCC (5V, rechte Stellung ist dann für **an**) und Mittelkontakt auf Arduino-IO-Pin 6 (Verbindung zum Relais, Mittelstellung ist dann für **Automatik**).
 
-Die wichtigsten Fragen rund um den Taupunktlüfter beantwortet eine **[FAQ](https://heise.de/-6526328)**. Den vollständigen Artikel zum Projekt gibt es in der **[Make-Ausgabe 1/22 ab Seite 22](https://www.heise.de/select/make/2022/1/2135511212557842576)** zu lesen.
+Die wichtigsten Fragen rund um den Taupunktlüfter beantwortet eine **[FAQ](https://heise.de/-6526328)**. Die vollständigen Artikel zum Projekt gibt es in der **[Make-Ausgabe 1/22 ab Seite 22](https://www.heise.de/select/make/2022/1/2135511212557842576)** und in der **[Make-Ausgabe 2/22 ab Seite 82](https://www.heise.de/select/make/2022/2/2204711461516715363) zu lesen.
