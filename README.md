@@ -10,7 +10,7 @@ Maker Media GmbH
 
 ![Taupunktluefter](./Taupunktluefter.jpg)
 
-Hier gibt es den Arduino-Code zum Projekt des Taupunktlüfters sowohl in der Fassung ohne Datenlogger, wie in Make 1/22 beschrieben, als auch in der Fassung mit Datenlogger, die in Make 2/22 beschrieben wird. Diese Version zeigt auch der erweiterte Schaltplan:
+Hier gibt es den Arduino-Code zum Projekt des Taupunktlüfters sowohl in der Fassung ohne Datenlogger (Code im Ordner _Taupunkt_Lueftung_), wie in Make 1/22 beschrieben, als auch in der Fassung mit Datenlogger (Code im Ordner _Taupunkt_Lueftung_Datenlogging_Version_2.13_), die in Make 2/22 beschrieben wird. Diese Version zeigt auch der erweiterte Schaltplan:
 
 ![Schaltplan Taupunktlüfter mit Logger](./TaupunktluefterMitLogger.jpg)
 
