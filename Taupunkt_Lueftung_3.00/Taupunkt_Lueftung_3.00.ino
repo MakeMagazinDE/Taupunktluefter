@@ -6,8 +6,14 @@
 //
 // Ulrich Schmerold
 // 3/2022
+//
+//
+// Refactored von Manfred Kral
+//
+// Manfred Kral
+// 6/2022
 //////////////////////////////////////////////////////////////////////////////
-#define Software_version "Version: 2.13"
+#define Software_version "Version: 3.00"
 
 // Libraries
 #include <DHT.h>
