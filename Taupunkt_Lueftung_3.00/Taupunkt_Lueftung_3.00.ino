@@ -491,7 +491,7 @@ void loop()
 		dataLogStr += '0';
 		dataLogStr += ';';
 
-		saveToSD(dataLogStr, dayChange);
+		saveToSD(dataLogStr, dayChange || stateTimeSeconds == 0);
 	}
 
 	if (isRelaisOn == true)

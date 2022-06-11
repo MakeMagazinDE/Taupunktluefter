@@ -53,7 +53,7 @@ bool checkSD()
 	return success;
 }
 
-void saveToSD(const String &logStr_, bool dayChange_)
+void saveToSD(const String &logStr_, bool force_)
 {
 	// Last save time, to calculate correct interval.
 	static unsigned long lastSaveTime = 0;
@@ -65,7 +65,7 @@ void saveToSD(const String &logStr_, bool dayChange_)
 	}
 
 	// If a new day has started, or the interval is reached save the data.
-	if (t < lastSaveTime + LOG_INTERVAL_MIN && !dayChange_)
+	if (t < lastSaveTime + LOG_INTERVAL_MIN && force_ == false)
 	{
 		return;
 	}
