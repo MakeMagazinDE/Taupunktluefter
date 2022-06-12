@@ -26,30 +26,33 @@
 
 
 // Config
-#define CORR_T_I      -1.1   // Korrekturwert Innensensor Temperatur
-#define CORR_H_I      -17.0  // Korrekturwert Innensensor Luftfeuchtigkeit
-#define CORR_T_O       0.2   // Korrekturwert Außensensor Temperatur
-#define CORR_H_O      -5.0   // Korrekturwert Außensensor Luftfeuchtigkeit
+#define IS_RTC_ENABLED        1
+#define IS_LOGGING_ENABLED    1
+#define IS_USB_DEBUG_ENABLED  0
 
-#define SWITCH_LIMIT   2.0   // minimaler Taupuntunterschied, bei dem das Relais schaltet
-#define HYSTERESE      1.0   // Abstand von Ein- und Ausschaltpunkt
-#define TEMP_I_MIN     10.0  // Minimale Innentemperatur, bei der die Lüftung aktiviert wird
-#define TEMP_O_MIN    -10.0  // Minimale Außentemperatur, bei der die Lüftung aktiviert wird
-#define RING_BUFFER_SIZE 8  // Size of the ring buffer
+#if IS_LOGGING_ENABLBED && IS_RTC_ENABLED == 0
+# error "Logging is enabled, but RTC is disabled!"
+#endif
 
-#define CHANGE_INTERVAL_MINUTES 10
 
-#define Headerzeile F("Date/Time;Temperature T_I;Humidity H_I;Dew point DP_I;Temperature T_O;Humidity H_O;Dew point DP_O;Fan on/off;Fan time;Reboot;")
+#define CORRECTION_T_I       -1.1   // Korrekturwert Innensensor Temperatur
+#define CORRECTION_H_I       -17.0  // Korrekturwert Innensensor Luftfeuchtigkeit
+#define CORRECTION_T_O        0.2   // Korrekturwert Außensensor Temperatur
+#define CORRECTION_H_O       -5.0   // Korrekturwert Außensensor Luftfeuchtigkeit
 
-#define LOG_FILE_NAME     F("fan.csv")
-#define LOG_INTERVAL_MIN  10
+#define SWITCH_OFF_LIMIT      2.0   // Minimaler Taupuntunterschied, bei dem das Relais ausschaltet.
+#define HYSTERESE             1.0   // Minimaler Unterschied + Hysterese ergibt den Einschaltpunkt.
+#define TEMP_I_MIN            10.0  // Minimale Innentemperatur, bei der die Lüftung nicht mehr aktiviert wird.
+#define TEMP_O_MIN           -10.0  // Minimale Außentemperatur, bei der die Lüftung nicht mehr aktiviert wird.
 
-#define LOGGING_ENABLE    true
-#define WRITE_MSG_TO_USB  false
+#define RING_BUFFER_SIZE      8     // Size of the ring buffer.
 
-// Uncomment for time setting, bugt also change struct below.
+#define MIN_STATE_CHANGE_INTERVAL_MINUTES 10 // Minimal time in minutes, when the state of the fan is changed.
+
+
+// Uncomment for time setting. ATTENTION: Also change struct below!
 /* #define SET_TIME 1 */
-#if SET_TIME
+#if SET_TIME && IS_RTC_ENABLED
 Ds1302::DateTime setTimeStruct = {
 	.year = 22,
 	.month = Ds1302::MONTH_MAY,
@@ -62,31 +65,22 @@ Ds1302::DateTime setTimeStruct = {
 #endif
 
 
-// Hardware
-#define RELAIS_ON  HIGH
-#define RELAIS_OFF LOW
+// Hardware Config (Config of RTC and SD is in corresponding ino-Files.
+#define FAN_ON  HIGH
+#define FAN_OFF LOW
 
-#define RELAIS_PIN 6
-#define DHT_PIN_1  5
-#define DHT_PIN_2  4
-
-#define RTC_PIN_ENA 9
-#define RTC_PIN_CLK 7
-#define RTC_PIN_DAT 8
-
-Ds1302 rtc(RTC_PIN_ENA, RTC_PIN_CLK, RTC_PIN_DAT);
+#define FAN_PIN 6
+#define DHT_PIN_I  5
+#define DHT_PIN_O  4
 
 #define DHTTYPE_I  DHT22
 #define DHTTYPE_O  DHT22
 
-DHT dhtI(DHT_PIN_1, DHTTYPE_I);
-DHT dhtA(DHT_PIN_2, DHTTYPE_O);
+DHT dhtI(DHT_PIN_I, DHTTYPE_I);
+DHT dhtA(DHT_PIN_O, DHTTYPE_O);
+
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
-
-// Variables
-bool useSerial = WRITE_MSG_TO_USB;
-static bool isLoggingEnabled = LOGGING_ENABLE;
 
 typedef struct {
 	float temperatureI;
@@ -104,10 +98,11 @@ void setup()
 	// Enable watchdog with 8s.
 	wdt_enable(WDTO_8S);
 
-	// Configure relais pin as output.
-	pinMode(RELAIS_PIN, OUTPUT);
-	// Turn off relais pin.
-	digitalWrite(RELAIS_PIN, RELAIS_OFF);
+	// Configure fan pin as output.
+	pinMode(FAN_PIN, OUTPUT);
+
+	// Turn off fan pin.
+	digitalWrite(FAN_PIN, FAN_OFF);
 
 	// Init LCD.
 	lcd.init();
@@ -122,18 +117,15 @@ void setup()
 	lcd.print(Software_version);
 	delay(1000);
 
-	// Logging
-	if (isLoggingEnabled == true)
-	{
-		// Init RTC.
-		startRTC();
+	// Init RTC.
+	startRTC();
 
-		if (useSerial)
-			Serial.begin(9600);
+	// Check and show state of SD Card.
+	checkSD();
 
-		// Check SD card. If there is an error, also stop logging.
-		isLoggingEnabled = checkSD();
-	}
+	#if IS_USB_DEBUG_ENABLED
+		Serial.begin(9600);
+	#endif
 
 	// Create special char °
 	byte Grad[8] = {
@@ -181,358 +173,58 @@ void setup()
 void loop()
 {
 	static size_t measurePointCursor = 0;
-	static uint8_t today = 0;
-	static Ds1302::DateTime now;
 	static bool inited = false;
 	static String error("Init");
 
-	rtc.getDateTime(&now);
+	getNow();
 
 	// Log reboot. Logging may have changed due to an error.
-	if (inited == false && isLoggingEnabled == true)
+	if (inited == false)
 	{
-		File logFile = SD.open(LOG_FILE_NAME, FILE_WRITE);
-		logFile.print(createTimeStamp());
-		logFile.println(F(";;;;;;;;;reboot"));
-		logFile.close();
+		writeMsgToSD(F(";;;;;;;;;reboot"));
 		inited = true;
+
+		checkSensors();
 	}
 
-	// Read sensor values.
-	float hI = dhtI.readHumidity() + CORR_H_I;
-	float tI = dhtI.readTemperature() + CORR_T_I;
-	float hO = dhtA.readHumidity() + CORR_H_O;
-	float tO = dhtA.readTemperature() + CORR_T_O;
+	MeasurePoint mp = makeMeasurement();
 
-	// Is also true on the first run.
-	for(size_t i = 0; i < 3 && error.length() != 0; i++)
-	{
-		lcd.clear();
-		lcd.setCursor(2, 0);
-		lcd.print(F("Sensor test "));
-		lcd.print(String(i + 1));
-		error = F("");
+	displaySensorValues(mp);
 
-		if (isnan(hI) || isnan(tI))
-		{
-			error += F("I: hI=NAN ");
-			error += F("I: tI=NAN ");
-		}
-		else
-		{
-			if (hI > 100)
-				error += F("I: hI>100 ");
-			if (hI < 1)
-				error += F("I: hI<1 ");
-			if (tI < -40)
-				error += F("I: tI<-40 ");
-			if (tI > 80)
-				error += F("I: tI>80 ");
-		}
+	measurePoints[measurePointCursor++ % RING_BUFFER_SIZE] = mp;
 
-		if (error.length() != 0)
-		{
-			lcd.setCursor(0, 1);
-			lcd.print(F("Sensor I: ERROR"));
-
-			if (useSerial)
-				Serial.println(F("Sensor I: ERROR"));
-
-			lcd.setCursor(0, 3);
-			lcd.print(error);
-
-			// Display time
-			delay(3000);
-			wdt_reset();
-			continue;
-		}
-		else
-		{
-			lcd.setCursor(0, 1);
-			lcd.print(F("Sensor I: OK"));
-
-			if (useSerial)
-				Serial.println(F("Sensor I: OK"));
-		}
-
-		if (isnan(hO) || isnan(tO))
-		{
-			error += F("O: hO=NAN ");
-			error += F("O: tO=NAN ");
-		}
-		else
-		{
-			if (hO > 100)
-				error += F("O: hO>100 ");
-			if (hO < 1)
-				error += F("O: hO<1 ");
-			if (tO < -40)
-				error += F("O: tO<-40 ");
-			if (tO  > 80)
-				error += F("O: tO>80 ");
-		}
-
-		if (error.length() != 0)
-		{
-			lcd.setCursor(0, 2);
-			lcd.print(F("Sensor O: ERROR"));
-
-			if (useSerial)
-				Serial.println(F("Sensor O: ERROR"));
-
-			lcd.setCursor(0, 3);
-			lcd.print(error);
-		}
-		else
-		{
-			lcd.setCursor(0, 2);
-			lcd.print(F("Sensor O: OK"));
-
-			if (useSerial)
-				Serial.println(F("Sensor O: OK"));
-		}
-
-		// Display time
-		delay(3000);
-		wdt_reset();
-	}
-
-	if (error.length() != 0)
-	{
-		digitalWrite(RELAIS_PIN, RELAIS_OFF); // Relais ausschalten
-		lcd.clear();
-		lcd.setCursor(0, 0);
-		lcd.print(F("Reboot error:"));
-		lcd.setCursor(1, 0);
-		lcd.print(error);
-		if (isLoggingEnabled == true)
-		{
-			File logFile = SD.open(LOG_FILE_NAME, FILE_WRITE);
-			logFile.print(createTimeStamp());
-			logFile.print(F(";;;;;;;;;reboot error;"));
-			logFile.println(error);
-			logFile.close();
-			inited = true;
-		}
-
-		// Wait for watchdog.
-		while (1)
-			;
-	}
-
-	wdt_reset();
-
-	// Calculate dew point.
-	float dewPointI = calcDewPoint(tI, hI);
-	float dewPointO = calcDewPoint(tO, hO);
-
-	displayValues(tI, hI, tO, hO, dewPointI, dewPointO);
-
-	measurePoints[measurePointCursor++ % RING_BUFFER_SIZE] = {
-		tI,
-		tO,
-		hI,
-		hO,
-		dewPointI,
-		dewPointO,
-	};
-
-	MeasurePoint avgMp = calculateAverage(measurePoints, sizeof measurePoints / sizeof measurePoints[0]);
+	MeasurePoint avgMp = calculateAverage(
+		measurePoints,
+		sizeof measurePoints / sizeof measurePoints[0]
+	);
 	displayValuesPageAvg(avgMp);
 
-	static unsigned int fanStartMinutes = 0;            // Start time of fan.
-	static unsigned int fanTime = 0;                    // Run time of fan.
-	static unsigned int stateStartSeconds = 0;          // Start time of actual state.
-	static unsigned int stateTimeSeconds = 0;           // Run time of the actual state.
-
-	static bool isRelaisOn = false;
-
-	if (today != now.day)
-		stateStartSeconds = 0;
-
-	unsigned int nowSecs = now.hour * 3600 + now.minute * 60 + now.second;
-	stateTimeSeconds += nowSecs - stateStartSeconds;
-
-	if (useSerial)
-	{
-		Serial.print(F("stateTimeSeconds: "));
-		Serial.println(stateTimeSeconds);
-		Serial.print(F("nowSecs: "));
-		Serial.println(nowSecs);
-		Serial.print(F("stateStartSeconds: "));
-		Serial.println(stateStartSeconds);
-		Serial.print(F("hour: "));
-		Serial.print(now.hour);
-		Serial.print(F(" min: "));
-		Serial.print(now.minute);
-		Serial.print(F(" sec: "));
-		Serial.println(now.second);
-	}
-
-	stateStartSeconds = nowSecs;
-
+	static unsigned int stateTimeSeconds = 0;  // Run time of the actual state.
+	static bool isFanOn = false;
+	bool hasStateChanged = false;
 	bool isStateOnHold = false;
-	if (stateTimeSeconds < CHANGE_INTERVAL_MINUTES * 60)
-		isStateOnHold = true;
+	float deltaDP = calculateFanState(
+		avgMp,
+		&isFanOn,
+		&hasStateChanged,
+		&isStateOnHold,
+		&stateTimeSeconds
+	);
 
-	float deltaDP = avgMp.dewPointI - avgMp.dewPointO;
-	if (isStateOnHold == false)
+	displayStatPage(deltaDP, stateTimeSeconds / 60, isFanOn, isStateOnHold);
+
+	logValuesToSD(avgMp, isFanOn, hasStateChanged);
+
+	if (isFanOn == true)
 	{
-		if (useSerial)
-			Serial.println(F("onHold = false"));
-		bool shouldRelaisBeOn = calculateRelaisState(avgMp.temperatureI, avgMp.temperatureO, deltaDP);
-		if (shouldRelaisBeOn != isRelaisOn)
-		{
-			if (useSerial)
-				Serial.println(F("state change"));
-			stateTimeSeconds = 0;
-			stateStartSeconds = now.hour * 3600 + now.minute * 60 + now.second;
-		}
-
-		isRelaisOn = shouldRelaisBeOn;
-	}
-
-	displayStatPage(deltaDP, stateTimeSeconds / 60, isRelaisOn, isStateOnHold);
-
-
-	// Calculation for day summary only.
-	if (isRelaisOn == true)
-	{
-		if (fanStartMinutes <= 0)
-		{
-			fanStartMinutes = now.hour * 60 + now.minute;
-		}
+		digitalWrite(FAN_PIN, FAN_ON); // Turn fan on
 	}
 	else
 	{
-		if (fanStartMinutes > 0)
-		{
-			fanTime += now.hour * 60 + now.minute - fanStartMinutes;
-			fanStartMinutes = 0;
-		}
-	}
-
-	if (isLoggingEnabled == true)
-	{
-		char buf[sizeof "0.1"];
-		String dataLogStr = "";
-
-		dtostrf(avgMp.temperatureI, 2, 1, buf);
-		dataLogStr += buf;
-		dataLogStr += ';';
-
-		dtostrf(avgMp.humidityI, 2, 1, buf);
-		dataLogStr += buf;
-		dataLogStr += ';';
-
-		dtostrf(avgMp.dewPointI, 2, 1, buf);
-		dataLogStr += buf;
-		dataLogStr += ';';
-
-		dtostrf(avgMp.temperatureO, 2, 1, buf);
-		dataLogStr += buf;
-		dataLogStr += ';';
-
-		dtostrf(avgMp.humidityO, 2, 1, buf);
-		dataLogStr += buf;
-		dataLogStr += ';';
-
-		dtostrf(avgMp.dewPointO, 2, 1, buf);
-		dataLogStr += buf;
-		dataLogStr += ';';
-
-		if (isRelaisOn == true)
-		{
-			dataLogStr += "1;";
-		}
-		else
-		{
-			dataLogStr += "0;";
-		}
-
-		// A new day has started.
-		char fanTimeStr[sizeof "1440"];
-		fanTimeStr[0] = '\0';
-		bool dayChange = false;
-		if (today != now.day)
-		{
-			dayChange = true;
-
-			// On first run today is '0', and we don't have to log
-			// fan time.
-			if (today)
-			{
-				// If fan is running, calculate fan time.
-				if (fanStartMinutes > 0)
-				{
-					// 24h * 60m = 1440
-					fanTime += 1440 - fanStartMinutes;
-				}
-
-				snprintf(fanTimeStr, sizeof fanTimeStr, "%d", fanTime);
-			}
-			else
-			{
-				// No day change.
-				strcpy(fanTimeStr, "0");
-			}
-
-			fanTime = 0;
-			today = now.day;
-		}
-		else
-		{
-			// No day change.
-			strcpy(fanTimeStr, "0");
-		}
-
-		dataLogStr += fanTimeStr;
-		dataLogStr += ';';
-		dataLogStr += '0';
-		dataLogStr += ';';
-
-		saveToSD(dataLogStr, dayChange || stateTimeSeconds == 0);
-	}
-
-	if (isRelaisOn == true)
-	{
-		digitalWrite(RELAIS_PIN, RELAIS_ON); // Relais einschalten
-	}
-	else
-	{
-		digitalWrite(RELAIS_PIN, RELAIS_OFF); // Relais ausschalten
+		digitalWrite(FAN_PIN, FAN_OFF); // Turn fan off
 	}
 }
 
-
-float calcDewPoint(float t, float h)
-{
-	float a = 0.0;
-	float b = 0.0;
-
-	if (t >= 0)
-	{
-		a = 7.5;
-		b = 237.3;
-	}
-	else if (t < 0)
-	{
-		a = 7.6;
-		b = 240.7;
-	}
-
-	// Sättigungsdampfdruck in hPa
-	float sdd = 6.1078 * pow(10, (a * t) / (b + t));
-
-	// Steam preassure in hPa
-	float dd = sdd * (h / 100);
-
-	// v-parameter
-	float v = log10(dd / 6.1078);
-
-	// Dew point temperature (°C)
-	return (b * v) / (a - v);
-}
 
 // Restart program, but not sensors or lcd.
 void restartProgram()
@@ -540,41 +232,37 @@ void restartProgram()
 	asm volatile ("  jmp 0");
 }
 
-void displayValues(
-	float tI, float hI,
-	float tO, float hO,
-	float dewPointI, float dewPointO
-)
+void displaySensorValues(const MeasurePoint &mp_)
 {
 	// Display values to LCD.
 	lcd.clear();
 	lcd.setCursor(0, 0);
 	lcd.print(F("TI: "));
-	lcd.print(tI);
+	lcd.print(mp_.temperatureI);
 	lcd.write((uint8_t)0); // Special char °
 	lcd.write(('C'));
 	lcd.write((uint8_t)1); // Special char |
-	lcd.print(hI);
+	lcd.print(mp_.humidityI);
 	lcd.print(F(" %"));
 
 	lcd.setCursor(0, 1);
 	lcd.print(F("TO: "));
-	lcd.print(tO);
+	lcd.print(mp_.temperatureO);
 	lcd.write((uint8_t)0); // Special char °C
 	lcd.write(('C'));
 	lcd.write((uint8_t)1); // Special char |
-	lcd.print(hO);
+	lcd.print(mp_.humidityO);
 	lcd.print(F(" %"));
 
 	lcd.setCursor(0, 2);
 	lcd.print(F("DpI: "));
-	lcd.print(dewPointI);
+	lcd.print(mp_.dewPointI);
 	lcd.write((uint8_t)0); // Special char °C
 	lcd.write(('C'));
 
 	lcd.setCursor(0, 3);
 	lcd.print(F("DpO: "));
-	lcd.print(dewPointO);
+	lcd.print(mp_.dewPointO);
 	lcd.write((uint8_t)0); // Special char °C
 	lcd.write(('C'));
 
@@ -583,62 +271,6 @@ void displayValues(
 
 	lcd.clear();
 }
-
-MeasurePoint calculateAverage(const MeasurePoint *measurePoints, size_t cnt)
-{
-	MeasurePoint measurePoint = {};
-
-	size_t i = 0;
-	for (i = 0; i < cnt; i++)
-	{
-		if (       measurePoints[i].temperatureI > 500
-			|| measurePoints[i].temperatureO > 500
-			|| measurePoints[i].humidityI > 500
-			|| measurePoints[i].humidityO > 500
-			|| measurePoints[i].dewPointI > 500
-			|| measurePoints[i].dewPointO > 500
-		)
-			break;
-
-		/* if (useSerial) */
-		/* { */
-		/* 	Serial.print(F("i: ")); */
-		/* 	Serial.println(i); */
-		/* 	Serial.print(F("tI: ")); */
-		/* 	Serial.println(measurePoints[i].temperatureI); */
-		/* 	Serial.print(F("tO: ")); */
-		/* 	Serial.println(measurePoints[i].temperatureO); */
-		/* 	Serial.print(F("hI: ")); */
-		/* 	Serial.println(measurePoints[i].humidityI); */
-		/* 	Serial.print(F("hO: ")); */
-		/* 	Serial.println(measurePoints[i].humidityO); */
-		/* 	Serial.print(F("dI: ")); */
-		/* 	Serial.println(measurePoints[i].dewPointI); */
-		/* 	Serial.print(F("dO: ")); */
-		/* 	Serial.println(measurePoints[i].dewPointO); */
-		/* } */
-
-		measurePoint.temperatureI += measurePoints[i].temperatureI;
-		measurePoint.temperatureO += measurePoints[i].temperatureO;
-		measurePoint.humidityI += measurePoints[i].humidityI;
-		measurePoint.humidityO += measurePoints[i].humidityO;
-		measurePoint.dewPointI += measurePoints[i].dewPointI;
-		measurePoint.dewPointO += measurePoints[i].dewPointO;
-	}
-
-	if (i == 0)
-		return measurePoint;
-
-	measurePoint.temperatureI = measurePoint.temperatureI / i;
-	measurePoint.temperatureO = measurePoint.temperatureO / i;
-	measurePoint.humidityI = measurePoint.humidityI / i;
-	measurePoint.humidityO = measurePoint.humidityO / i;
-	measurePoint.dewPointI = measurePoint.dewPointI / i;
-	measurePoint.dewPointO = measurePoint.dewPointO / i;
-
-	return measurePoint;
-}
-
 void displayValuesPageAvg(const MeasurePoint measurePoint)
 {
 	// Display values to LCD.
@@ -681,24 +313,26 @@ void displayValuesPageAvg(const MeasurePoint measurePoint)
 	wdt_reset();    // Watchdog zurücksetzen
 }
 
-void displayStatPage(float deltaDP, unsigned int stateTimeMinutes, bool isRelaisOn, bool isStateOnHold)
+void displayStatPage(float deltaDP, unsigned int stateTimeMinutes, bool isFanOn, bool isStateOnHold)
 {
 	lcd.clear();
 	lcd.setCursor(0, 0);
 
-	if (isRelaisOn)
+	if (isFanOn)
 	{
 		lcd.print(F("Fan ON "));
 
-		if (useSerial)
+		#if IS_USB_DEBUG_ENABLED
 			Serial.println(F("Fan ON"));
+		#endif
 	}
 	else
 	{
 		lcd.print(F("Fan OFF "));
 
-		if (useSerial)
+		#if IS_USB_DEBUG_ENABLED
 			Serial.println(F("Fan OFF"));
+		#endif
 	}
 
 	lcd.print("T: ");
@@ -717,10 +351,11 @@ void displayStatPage(float deltaDP, unsigned int stateTimeMinutes, bool isRelais
 	lcd.write('C');
 
 	lcd.setCursor(0, 2);
-	if (isLoggingEnabled == true)
-		lcd.print(F("Logging ON"));
-	else
-		lcd.print(F("Logging OFF"));
+#if IS_LOGGING_ENABLED
+	lcd.print(F("Logging ON"));
+#else
+	lcd.print(F("Logging OFF"));
+#endif
 
 	lcd.setCursor(0, 3);
 	lcd.print(createTimeStamp());
@@ -729,14 +364,39 @@ void displayStatPage(float deltaDP, unsigned int stateTimeMinutes, bool isRelais
 	wdt_reset();    // Watchdog zurücksetzen
 }
 
-bool calculateRelaisState(float tI, float tO, float deltaDP)
+MeasurePoint calculateAverage(const MeasurePoint *measurePoints, size_t cnt)
 {
-	if (SWITCH_LIMIT + HYSTERESE < deltaDP)
-		return true;
-	if (deltaDP < SWITCH_LIMIT)
-		return false;
-	if (tI < TEMP_I_MIN )
-		return false;
-	if (tO < TEMP_O_MIN )
-		return false;
+	MeasurePoint measurePoint = {};
+
+	size_t i = 0;
+	for (i = 0; i < cnt; i++)
+	{
+		if (       measurePoints[i].temperatureI > 500
+			|| measurePoints[i].temperatureO > 500
+			|| measurePoints[i].humidityI > 500
+			|| measurePoints[i].humidityO > 500
+			|| measurePoints[i].dewPointI > 500
+			|| measurePoints[i].dewPointO > 500
+		)
+			break;
+
+		measurePoint.temperatureI += measurePoints[i].temperatureI;
+		measurePoint.temperatureO += measurePoints[i].temperatureO;
+		measurePoint.humidityI += measurePoints[i].humidityI;
+		measurePoint.humidityO += measurePoints[i].humidityO;
+		measurePoint.dewPointI += measurePoints[i].dewPointI;
+		measurePoint.dewPointO += measurePoints[i].dewPointO;
+	}
+
+	if (i == 0)
+		return measurePoint;
+
+	measurePoint.temperatureI = measurePoint.temperatureI / i;
+	measurePoint.temperatureO = measurePoint.temperatureO / i;
+	measurePoint.humidityI = measurePoint.humidityI / i;
+	measurePoint.humidityO = measurePoint.humidityO / i;
+	measurePoint.dewPointI = measurePoint.dewPointI / i;
+	measurePoint.dewPointO = measurePoint.dewPointO / i;
+
+	return measurePoint;
 }
