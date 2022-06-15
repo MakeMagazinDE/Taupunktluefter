@@ -16,7 +16,7 @@
 
 #define LOG_FILE_NAME     F("fan.csv")
 #define LOG_INTERVAL_MIN  10
-#define CSV_HEADER        F("Date/Time;Temperature T_I;Humidity H_I;Dew point DP_I;Temperature T_O;Humidity H_O;Dew point DP_O;Fan on/off;Fan time;Reboot;")
+#define CSV_HEADER        F("Date/Time;Temperature T_I;Humidity H_I;Dew point DP_I;Temperature T_O;Humidity H_O;Dew point DP_O;Fan state;Fan time;Reboot;")
 
 
 // Pin for CS connection.
