@@ -35,8 +35,8 @@
 #endif
 
 
-#define CORRECTION_T_I       -1.1   // Korrekturwert Innensensor Temperatur
-#define CORRECTION_H_I       -17.0  // Korrekturwert Innensensor Luftfeuchtigkeit
+#define CORRECTION_T_I        0.1   // Korrekturwert Innensensor Temperatur
+#define CORRECTION_H_I       -13.7  // Korrekturwert Innensensor Luftfeuchtigkeit
 #define CORRECTION_T_O        0.2   // Korrekturwert Außensensor Temperatur
 #define CORRECTION_H_O       -5.0   // Korrekturwert Außensensor Luftfeuchtigkeit
 
