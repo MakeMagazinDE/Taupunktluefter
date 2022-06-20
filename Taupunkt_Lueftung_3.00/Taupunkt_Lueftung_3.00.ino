@@ -35,10 +35,14 @@
 #endif
 
 
-#define CORRECTION_T_I        0.1   // Korrekturwert Innensensor Temperatur
-#define CORRECTION_H_I       -13.7  // Korrekturwert Innensensor Luftfeuchtigkeit
+/* #define CORRECTION_T_I        0.3   // Korrekturwert Innensensor Temperatur */
+/* #define CORRECTION_H_I       -20.7  // Korrekturwert Innensensor Luftfeuchtigkeit */
+/* #define CORRECTION_T_O        0.2   // Korrekturwert Außensensor Temperatur */
+/* #define CORRECTION_H_O       -5.0   // Korrekturwert Außensensor Luftfeuchtigkeit */
+#define CORRECTION_T_I        0.3   // Korrekturwert Innensensor Temperatur
+#define CORRECTION_H_I       -11.7  // Korrekturwert Innensensor Luftfeuchtigkeit
 #define CORRECTION_T_O        0.2   // Korrekturwert Außensensor Temperatur
-#define CORRECTION_H_O       -5.0   // Korrekturwert Außensensor Luftfeuchtigkeit
+#define CORRECTION_H_O        4.0   // Korrekturwert Außensensor Luftfeuchtigkeit
 
 #define SWITCH_OFF_LIMIT      2.0   // Minimaler Taupuntunterschied, bei dem das Relais ausschaltet.
 #define HYSTERESE             1.0   // Minimaler Unterschied + Hysterese ergibt den Einschaltpunkt.
