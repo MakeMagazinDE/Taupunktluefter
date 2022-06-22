@@ -30,14 +30,10 @@ float calculateFanState(
 		Serial.println(getSecondsOfDay());
 	#endif
 
-	stateStartSeconds = nowSecs;
-
 	*isStateOnHold_ = false;
 	if (*stateTimeSeconds_ < MIN_STATE_CHANGE_INTERVAL_MINUTES * 60)
-		*isStateOnHold_ = true;
-
-	if (*isStateOnHold_ == true)
 	{
+		*isStateOnHold_ = true;
 		return deltaDP;
 	}
 
@@ -63,6 +59,8 @@ float calculateFanState(
 		Serial.print(F(" -> "));
 		Serial.println(shouldFanBeOn);
 	#endif
+
+	stateStartSeconds = nowSecs;
 
 	*isFanOn_ = shouldFanBeOn;
 	*hasStateChanged_ = true;
