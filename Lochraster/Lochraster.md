@@ -17,6 +17,6 @@ Zu den Nummern, welche die Anschlüsse durchnummerieren:
 
 Hier ein Bild von unten:
 
-![Untenansicht](.\Lochraster_Untenansicht.jpg)
+![Untenansicht](./Lochraster_Untenansicht.jpg)
 
 Die drei [PDFs](./PDF) sind aus Fritzing exportiert, mit Gesamtschaltplan, Draufsicht und Sicht von unten. **Achtung**: Die Sicht von unten muss natürlich gespiegelt werden. 
