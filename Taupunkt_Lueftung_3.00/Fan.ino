@@ -30,6 +30,8 @@ float calculateFanState(
 		Serial.println(getSecondsOfDay());
 	#endif
 
+	stateStartSeconds = nowSecs;
+
 	*isStateOnHold_ = false;
 	if (*stateTimeSeconds_ < MIN_STATE_CHANGE_INTERVAL_MINUTES * 60)
 	{
@@ -60,14 +62,11 @@ float calculateFanState(
 		Serial.println(shouldFanBeOn);
 	#endif
 
-	stateStartSeconds = nowSecs;
-
 	*isFanOn_ = shouldFanBeOn;
 	*hasStateChanged_ = true;
 
 #if RTC_IS_ENABLED
 	*stateTimeSeconds_ = 0;
-	stateStartSeconds = getSecondsOfDay();
 #endif // RTC_IS_ENABLED
 
 	return deltaDP;

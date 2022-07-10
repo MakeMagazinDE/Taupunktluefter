@@ -161,7 +161,7 @@ void logValuesToSD(const MeasurePoint &mp_, bool isRelaisOn_, bool hasStateChang
 		if (shouldBeLogged() == false)
 		{
 			#if IS_USB_DEBUG_ENABLED
-				Serial.print(F("no log"));
+				Serial.println(F("no log"));
 			#endif
 			return;
 		}

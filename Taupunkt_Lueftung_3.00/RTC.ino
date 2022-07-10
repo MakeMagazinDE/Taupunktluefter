@@ -67,23 +67,28 @@ void startRTC()
 	lcd.clear();
 }
 
-static uint8_t today = 0;
-static Ds1302::DateTime now;
+static uint8_t _today = 0;
+static Ds1302::DateTime _now;
 static bool _hasDayChanged = true;
 static bool _isFirstDaySinceStart = true;
 
 void getNow() {
-	rtc.getDateTime(&now);
+	rtc.getDateTime(&_now);
 
-	_hasDayChanged = (today != now.day) ? true : false;
+	_hasDayChanged = (_today != _now.day) ? true : false;
 
 	// No day change, if it is not initialized.
-	if (_hasDayChanged && today != 0)
+	if (_hasDayChanged && _today != 0)
 	{
 		_isFirstDaySinceStart = false;
 	}
 
-	today = now.day;
+	#if IS_USB_DEBUG_ENABLED
+		Serial.print(F("hasDayChanged: "));
+		Serial.println(_hasDayChanged);
+	#endif
+
+	_today = _now.day;
 }
 
 bool hasDayChanged() {
@@ -91,11 +96,11 @@ bool hasDayChanged() {
 }
 
 unsigned int getMinutesOfDay() {
-	return now.hour * 60 + now.minute;
+	return _now.hour * 60 + _now.minute;
 }
 
 unsigned int getSecondsOfDay() {
-	return now.hour * 3600 + now.minute * 60 + now.second;
+	return _now.hour * 3600 + _now.minute * 60 + _now.second;
 }
 
 bool isFirstDaySinceStart() {

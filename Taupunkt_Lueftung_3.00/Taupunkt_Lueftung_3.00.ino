@@ -39,13 +39,21 @@
 /* #define CORRECTION_H_I       -20.7  // Korrekturwert Innensensor Luftfeuchtigkeit */
 /* #define CORRECTION_T_O        0.2   // Korrekturwert Außensensor Temperatur */
 /* #define CORRECTION_H_O       -5.0   // Korrekturwert Außensensor Luftfeuchtigkeit */
+
+/* +9% */
+/* #define CORRECTION_T_I        0.3   // Korrekturwert Innensensor Temperatur */
+/* #define CORRECTION_H_I       -11.7  // Korrekturwert Innensensor Luftfeuchtigkeit */
+/* #define CORRECTION_T_O        0.2   // Korrekturwert Außensensor Temperatur */
+/* #define CORRECTION_H_O        4.0   // Korrekturwert Außensensor Luftfeuchtigkeit */
+
+/* outside +5% inside  +9% */
 #define CORRECTION_T_I        0.3   // Korrekturwert Innensensor Temperatur
 #define CORRECTION_H_I       -11.7  // Korrekturwert Innensensor Luftfeuchtigkeit
 #define CORRECTION_T_O        0.2   // Korrekturwert Außensensor Temperatur
-#define CORRECTION_H_O        4.0   // Korrekturwert Außensensor Luftfeuchtigkeit
+#define CORRECTION_H_O        0.0   // Korrekturwert Außensensor Luftfeuchtigkeit
 
-#define SWITCH_OFF_LIMIT      2.0   // Minimaler Taupuntunterschied, bei dem das Relais ausschaltet.
-#define HYSTERESE             1.0   // Minimaler Unterschied + Hysterese ergibt den Einschaltpunkt.
+#define SWITCH_OFF_LIMIT      1.0   // Minimaler Taupuntunterschied, bei dem das Relais ausschaltet.
+#define HYSTERESE             2.0   // Minimaler Unterschied + Hysterese ergibt den Einschaltpunkt.
 #define TEMP_I_MIN            10.0  // Minimale Innentemperatur, bei der die Lüftung nicht mehr aktiviert wird.
 #define TEMP_O_MIN           -10.0  // Minimale Außentemperatur, bei der die Lüftung nicht mehr aktiviert wird.
 
@@ -59,12 +67,12 @@
 #if SET_TIME && IS_RTC_ENABLED
 Ds1302::DateTime setTimeStruct = {
 	.year = 22,
-	.month = Ds1302::MONTH_MAY,
-	.day = 31,
-	.hour = 19,
-	.minute = 52,
+	.month = Ds1302::MONTH_JUN,
+	.day = 30,
+	.hour = 11,
+	.minute = 45,
 	.second = 0,
-	.dow = Ds1302::DOW_TUE,
+	.dow = Ds1302::DOW_THU,
 };
 #endif
 
@@ -203,7 +211,7 @@ void loop()
 	);
 	displayValuesPageAvg(avgMp);
 
-	static unsigned int stateTimeSeconds = 0;  // Run time of the actual state.
+	static unsigned int stateTimeSeconds = 1;  // Run time of the actual state.
 	static bool isFanOn = false;
 	bool hasStateChanged = false;
 	bool isStateOnHold = false;
