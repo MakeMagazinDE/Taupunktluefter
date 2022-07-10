@@ -65,9 +65,9 @@ float calculateFanState(
 	*isFanOn_ = shouldFanBeOn;
 	*hasStateChanged_ = true;
 
-#if RTC_IS_ENABLED
+#if IS_RTC_ENABLED
 	*stateTimeSeconds_ = 0;
-#endif // RTC_IS_ENABLED
+#endif // IS_RTC_ENABLED
 
 	return deltaDP;
 }
