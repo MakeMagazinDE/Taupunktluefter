@@ -1,0 +1,27 @@
+
+
+Einkaufsliste (wenn nicht anders angegeben bei Berrybase gekauft)
+
+#1* 200 x 120 x 75 mm 	- ABS Leergehäuse Industriegehäuse Kunststoff Gehäuse IP65 IP66 Gehäuse Box Kasten (EBAY)
+
+1* Arduino Nano v3	
+1* LCD 20x40 mit I2C
+x* Pinheader		- PinHeader RM 2,54
+x* Pinbuchsen		- PinBuchsen RM 2,54
+x* Pinbuchsen gewinkelt	- PinBuchsen gewinkelt RM 2,54
+x* Steckkabel		
+1* RS-15-5 		- MeanWell 1-Kanal Einbau Schaltnetzteil 15W, 5V / 3A
+2* AM2302 		- AM2302 / DHT22 - Digitaler Temperatur und Luftfeuchtesensor mit Kabelanschluss
+1* MSD-AADP 		- Micro SD Card Reader Modul mit SPI Schnittstelle
+1* D1-RTCS 		- DS1307 Realtime Clock / Echtzeituhr Shield für D1 Mini
+1* 4008496276899 	- VARTA Knopfzelle Lithium CR1220, 1er Blister
+1* ELK1M25VAWH 		- Elektrolytkondensator, 1000µF, 25V, 105°C, ±1%, radial, THT
+1* RELM-1 		- 5V 1 Kanal Relais Modul
+1* KEK10N50VCC 		- Keramikkondensator, 10nF, 50V, ±10%, THT, 2,54mm
+1* 10022 		- Miniatur Kippschalter, 3 Pin, EIN-AUS-EIN
+1* 10130 		- Mini Drucktaster, 1-polig, Schließer rot
+2* AKSW250-3P 		- Anschlussklemme, schraubbar, 90° gewinkelt, 2,50mm², RM 5,08mm, 3-polig (für DHT22)
+1* AKSW250-2P 		- Anschlussklemme, schraubbar, 90° gewinkelt, 2,50mm², RM 5,08mm, 2-polig (für PWR)
+2* 10k Ohm		- Widerstand
+2* 4,7k Ohm		- Widerstand
+1* 470 Ohm		- Widerstand
